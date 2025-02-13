@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unity WebGL Asset Loading Guide</title>
+    <title>Guide to Implementing Addressables, AssetBundles, and StreamingAssets in Unity WebGL</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
             margin: 20px;
-            padding: 20px;
-            max-width: 800px;
-            margin: auto;
-            background-color: #f4f4f4;
         }
         h1, h2, h3 {
             color: #333;
         }
+        code {
+            background-color: #f4f4f4;
+            padding: 5px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
         pre {
-            background: #222;
-            color: #f4f4f4;
+            background-color: #f4f4f4;
             padding: 10px;
             border-radius: 5px;
             overflow-x: auto;
-        }
-        code {
-            font-family: Consolas, monospace;
         }
         table {
             width: 100%;
@@ -34,36 +32,44 @@
         }
         table, th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+        }
+        th, td {
+            padding: 10px;
             text-align: left;
         }
         th {
-            background-color: #333;
-            color: white;
+            background-color: #f4f4f4;
         }
     </style>
 </head>
 <body>
-    <h1>Guide to Implementing Addressables, AssetBundles, and StreamingAssets in Unity WebGL</h1>
-    
-    <h2>1. Implementing Addressables in Unity WebGL (Recommended)</h2>
-    <h3>Step 1: Install the Addressables Package</h3>
-    <ul>
-        <li>Open Unity Editor.</li>
-        <li>Go to <strong>Window > Package Manager</strong>.</li>
-        <li>Search for <strong>Addressables</strong> and install it.</li>
-    </ul>
-    
-        <h3>Step 2: Mark Assets as Addressable</h3>
-    <ul>
-        <li>Open Unity Editor.</li>
-        <li>Select an asset in the Project window.</li>
-        <li>In the Inspector, check <strong>Make Addressable.</strong>.</li>
-        <li>Assign a unique<strong>Addressable key.</strong></li>
-    </ul>
-    
-    <h3>Step 2: Load Addressable Assets in Code</h3>
-    <pre><code>using UnityEngine;
+
+<h1>Guide to Implementing Addressables, AssetBundles, and StreamingAssets in Unity WebGL</h1>
+
+<h2>1. Implementing Addressables in Unity WebGL (Recommended)</h2>
+
+<h3>Step 1: Install the Addressables Package</h3>
+<ol>
+    <li>Open Unity Editor.</li>
+    <li>Go to <strong>Window > Package Manager</strong>.</li>
+    <li>Search for <strong>Addressables</strong> and install it.</li>
+</ol>
+
+<h3>Step 2: Mark Assets as Addressable</h3>
+<ol>
+    <li>Select an asset in the <strong>Project</strong> window.</li>
+    <li>In the <strong>Inspector</strong>, check <strong>Make Addressable</strong>.</li>
+    <li>Assign a unique <strong>Addressable key</strong>.</li>
+</ol>
+
+<h3>Step 3: Build Addressable Content</h3>
+<ol>
+    <li>Open <strong>Window > Asset Management > Addressables > Groups</strong>.</li>
+    <li>Click <strong>Build > New Build > Default Build Script</strong>.</li>
+</ol>
+
+<h3>Step 4: Load Addressable Assets in Code</h3>
+<pre><code>using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
@@ -71,10 +77,10 @@ public class LoadExample : MonoBehaviour
 {
     void Start()
     {
-        Addressables.LoadAssetAsync<GameObject>("AssetAddress").Completed += OnLoadDone;
+        Addressables.LoadAssetAsync&lt;GameObject&gt;("AssetAddress").Completed += OnLoadDone;
     }
 
-    private void OnLoadDone(AsyncOperationHandle<GameObject> obj)
+    private void OnLoadDone(AsyncOperationHandle&lt;GameObject&gt; obj)
     {
         if (obj.Status == AsyncOperationStatus.Succeeded)
         {
@@ -82,13 +88,48 @@ public class LoadExample : MonoBehaviour
         }
     }
 }</code></pre>
-    
-    <h2>2. Implementing AssetBundles in Unity WebGL</h2>
-    <h3>Step 1: Assign Assets to AssetBundles</h3>
-    <p>Select an asset, then set an <strong>AssetBundle</strong> name in the Inspector.</p>
-    
-    <h3>Step 2: Load AssetBundles in Code</h3>
-    <pre><code>using UnityEngine;
+
+<h3>Step 5: Host Addressable Assets Remotely</h3>
+<ol>
+    <li>Upload the <strong>Addressables</strong> to a CDN (Firebase, AWS, etc.).</li>
+    <li>Set <strong>Remote Load Path</strong> in Addressables Groups settings.</li>
+</ol>
+
+<h2>2. Implementing AssetBundles in Unity WebGL</h2>
+
+<h3>Step 1: Assign Assets to AssetBundles</h3>
+<ol>
+    <li>Select an asset.</li>
+    <li>In the <strong>Inspector</strong>, set an <strong>AssetBundle</strong> name.</li>
+</ol>
+
+<h3>Step 2: Build AssetBundles</h3>
+<ol>
+    <li>Create a script <strong>BuildAssetBundles.cs</strong>:</li>
+</ol>
+<pre><code>using UnityEditor;
+using System.IO;
+
+public class BuildAssetBundles
+{
+    [MenuItem("Assets/Build AssetBundles")]
+    static void BuildAllAssetBundles()
+    {
+        string assetBundleDirectory = "Assets/AssetBundles";
+        if (!Directory.Exists(assetBundleDirectory))
+            Directory.CreateDirectory(assetBundleDirectory);
+
+        BuildPipeline.BuildAssetBundles(assetBundleDirectory,
+                                        BuildAssetBundleOptions.None,
+                                        BuildTarget.WebGL);
+    }
+}</code></pre>
+<ol start="2">
+    <li>Click <strong>Assets > Build AssetBundles</strong>.</li>
+</ol>
+
+<h3>Step 3: Load AssetBundles in Code</h3>
+<pre><code>using UnityEngine;
 using System.Collections;
 
 public class LoadAssetBundle : MonoBehaviour
@@ -102,7 +143,7 @@ public class LoadAssetBundle : MonoBehaviour
         AssetBundle bundle = bundleLoadRequest.assetBundle;
         if (bundle != null)
         {
-            var assetLoadRequest = bundle.LoadAssetAsync<GameObject>("YourAssetName");
+            var assetLoadRequest = bundle.LoadAssetAsync&lt;GameObject&gt;("YourAssetName");
             yield return assetLoadRequest;
 
             GameObject obj = assetLoadRequest.asset as GameObject;
@@ -110,10 +151,20 @@ public class LoadAssetBundle : MonoBehaviour
         }
     }
 }</code></pre>
-    
-    <h2>3. Using StreamingAssets in Unity WebGL (CrazyGames Only)</h2>
-    <h3>Step 1: Load StreamingAssets in Code</h3>
-    <pre><code>using UnityEngine;
+
+<h3>Step 4: Host AssetBundles Remotely</h3>
+<p>Upload the AssetBundles to a <strong>web server</strong> or <strong>CDN</strong> and modify the URL for loading.</p>
+
+<h2>3. Using StreamingAssets in Unity WebGL (Supported by CrazyGames)</h2>
+
+<h3>Step 1: Add Files to StreamingAssets</h3>
+<ol>
+    <li>Create a folder <strong>Assets/StreamingAssets/</strong>.</li>
+    <li>Place assets (JSON, images, etc.) inside.</li>
+</ol>
+
+<h3>Step 2: Load StreamingAssets in Code</h3>
+<pre><code>using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
 
@@ -131,15 +182,18 @@ public class LoadStreamingAsset : MonoBehaviour
         }
     }
 }</code></pre>
-    
-    <h2>Final Recommendation</h2>
-    <table>
+
+<h2>Final Recommendation</h2>
+<table>
+    <thead>
         <tr>
             <th>Feature</th>
             <th>Addressables (Recommended)</th>
             <th>AssetBundles</th>
             <th>StreamingAssets (CrazyGames Only)</th>
         </tr>
+    </thead>
+    <tbody>
         <tr>
             <td>Initial Build Size</td>
             <td>✅ Small</td>
@@ -164,8 +218,10 @@ public class LoadStreamingAsset : MonoBehaviour
             <td>✅ Works</td>
             <td>✅ Only on CrazyGames</td>
         </tr>
-    </table>
-    
-    <p>Would you like a sample Unity project for these implementations? 🚀</p>
+    </tbody>
+</table>
+
+<p>Would you like a sample Unity project for these implementations? 🚀</p>
+
 </body>
 </html>
