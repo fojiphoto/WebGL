@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity WebGL Asset Loading Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+            background-color: #f4f4f4;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        pre {
+            background: #222;
+            color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: Consolas, monospace;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #333;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Guide to Implementing Addressables, AssetBundles, and StreamingAssets in Unity WebGL</h1>
+    
+    <h2>1. Implementing Addressables in Unity WebGL (Recommended)</h2>
+    <h3>Step 1: Install the Addressables Package</h3>
+    <ul>
+        <li>Open Unity Editor.</li>
+        <li>Go to <strong>Window > Package Manager</strong>.</li>
+        <li>Search for <strong>Addressables</strong> and install it.</li>
+    </ul>
+    
+    <h3>Step 2: Load Addressable Assets in Code</h3>
+    <pre><code>using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+
+public class LoadExample : MonoBehaviour
+{
+    void Start()
+    {
+        Addressables.LoadAssetAsync<GameObject>("AssetAddress").Completed += OnLoadDone;
+    }
+
+    private void OnLoadDone(AsyncOperationHandle<GameObject> obj)
+    {
+        if (obj.Status == AsyncOperationStatus.Succeeded)
+        {
+            Instantiate(obj.Result);
+        }
+    }
+}</code></pre>
+    
+    <h2>2. Implementing AssetBundles in Unity WebGL</h2>
+    <h3>Step 1: Assign Assets to AssetBundles</h3>
+    <p>Select an asset, then set an <strong>AssetBundle</strong> name in the Inspector.</p>
+    
+    <h3>Step 2: Load AssetBundles in Code</h3>
+    <pre><code>using UnityEngine;
+using System.Collections;
+
+public class LoadAssetBundle : MonoBehaviour
+{
+    IEnumerator Start()
+    {
+        string path = Application.streamingAssetsPath + "/AssetBundles/yourbundle";
+        var bundleLoadRequest = AssetBundle.LoadFromFileAsync(path);
+        yield return bundleLoadRequest;
+
+        AssetBundle bundle = bundleLoadRequest.assetBundle;
+        if (bundle != null)
+        {
+            var assetLoadRequest = bundle.LoadAssetAsync<GameObject>("YourAssetName");
+            yield return assetLoadRequest;
+
+            GameObject obj = assetLoadRequest.asset as GameObject;
+            Instantiate(obj);
+        }
+    }
+}</code></pre>
+    
+    <h2>3. Using StreamingAssets in Unity WebGL (CrazyGames Only)</h2>
+    <h3>Step 1: Load StreamingAssets in Code</h3>
+    <pre><code>using UnityEngine;
+using System.Collections;
+using UnityEngine.Networking;
+
+public class LoadStreamingAsset : MonoBehaviour
+{
+    IEnumerator Start()
+    {
+        string path = Application.streamingAssetsPath + "/yourfile.json";
+        UnityWebRequest request = UnityWebRequest.Get(path);
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            string json = request.downloadHandler.text;
+        }
+    }
+}</code></pre>
+    
+    <h2>Final Recommendation</h2>
+    <table>
+        <tr>
+            <th>Feature</th>
+            <th>Addressables (Recommended)</th>
+            <th>AssetBundles</th>
+            <th>StreamingAssets (CrazyGames Only)</th>
+        </tr>
+        <tr>
+            <td>Initial Build Size</td>
+            <td>✅ Small</td>
+            <td>✅ Small</td>
+            <td>❌ Large</td>
+        </tr>
+        <tr>
+            <td>Remote Loading</td>
+            <td>✅ Yes</td>
+            <td>✅ Yes</td>
+            <td>❌ No</td>
+        </tr>
+        <tr>
+            <td>Caching</td>
+            <td>✅ Yes</td>
+            <td>❌ No</td>
+            <td>❌ No</td>
+        </tr>
+        <tr>
+            <td>WebGL Support</td>
+            <td>✅ Best</td>
+            <td>✅ Works</td>
+            <td>✅ Only on CrazyGames</td>
+        </tr>
+    </table>
+    
+    <p>Would you like a sample Unity project for these implementations? 🚀</p>
+</body>
+</html>
